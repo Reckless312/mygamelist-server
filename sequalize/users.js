@@ -1,6 +1,6 @@
 const {Sequelize, DataTypes} = require("sequelize");
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {logging: false});
+const sequelize = new Sequelize("postgres://neondb_owner:npg_hGEUP0L1Vbov@ep-orange-darkness-a2u2vo14-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require", {logging: false});
 
 const User = sequelize.define('User', {
     id: {
