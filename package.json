@@ -18,7 +18,8 @@
     "express-fileupload": "^1.5.1",
     "sequelize": "^6.37.7",
     "ts-jest": "^29.3.2",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "pg": "^8.16.0"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.7.0",
