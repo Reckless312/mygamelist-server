@@ -1,10 +1,27 @@
 {
-  "repository": "https://github.com/vercel/examples.git",
-  "license": "MIT",
-  "private": true,
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "main": "server.js",
+  "scripts": {
+    "dev": "dotenv -e .env nodemon --max-old-space-size=4096 server",
+    "start": "node server",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@sequelize/core": "^7.0.0-alpha.46",
+    "body-parser": "^2.2.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-fileupload": "^1.5.1",
+    "sequelize": "^6.37.7",
+    "ts-jest": "^29.3.2"
+  },
   "devDependencies": {
-    "@types/node": "^17.0.42",
-    "@vercel/node": "^2.9.6",
-    "typescript": "^4.7.3"
+    "@faker-js/faker": "^9.7.0",
+    "dotenv-cli": "^8.0.0",
+    "nodemon": "^3.1.9"
   }
 }
