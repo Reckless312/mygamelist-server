@@ -3,6 +3,7 @@ const {Op} = require("@sequelize/core")
 const {faker} = require("@faker-js/faker")
 const {randomInt} = require("node:crypto");
 const {gameTitles, imageUrls, uniqueGameTags, gameDescriptions} = require("../videogames")
+const {pg} = require("pg");
 
 async function generateEntities(size){
     for (let i = 0; i < size; i++) {
@@ -24,7 +25,10 @@ async function generateEntities(size){
     }
 }
 
-const sequelize = new Sequelize("postgres://postgres.uutgjvlxpphpavxsscsw:RiT4MUjw4v2wuPZU@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&supa=base-pooler.x", {logging: false});
+const sequelize = new Sequelize("postgres://postgres.uutgjvlxpphpavxsscsw:RiT4MUjw4v2wuPZU@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&supa=base-pooler.x", {
+    dialect: 'postgres',
+    dialectModule: pg
+});
 
 const Game = sequelize.define('GAME', {
     id: {
