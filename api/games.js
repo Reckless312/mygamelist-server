@@ -31,7 +31,7 @@ router.route('/')
             res.json(games);
         } catch (error) {
             console.log(error);
-            res.status(500).json({message: 'Error happened while retrieving games'});
+            res.status(500).json({message: error.message});
         }
     })
     .post(async (req, res) => {
