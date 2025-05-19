@@ -1,9 +1,15 @@
 const {Sequelize, DataTypes} = require("sequelize");
 const {pg} = require("pg");
 
-const sequelize = new Sequelize("postgres://postgres.uutgjvlxpphpavxsscsw:RiT4MUjw4v2wuPZU@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&supa=base-pooler.x", {
+const sequelize = new Sequelize("postgres://postgres.uutgjvlxpphpavxsscsw:RiT4MUjw4v2wuPZU@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=disable&supa=base-pooler.x", {
     dialect: 'postgres',
-    dialectModule: pg
+    dialectModule: pg,
+    /*dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: false // <<<<<< THIS LINE
+        }
+    }*/
 });
 
 const User = sequelize.define('User', {

@@ -19,7 +19,9 @@ let lastIdGet = 0;
 router.route('/')
     .get(async (req, res) => {
         try {
+            console.log("new request")
             const {games, id} = await returnGames(lastIdGet);
+            console.log(games);
             lastIdGet = id;
 
             if (lastIdGet > await getMaximumId()) {
@@ -28,7 +30,8 @@ router.route('/')
 
             res.json(games);
         } catch (error) {
-            res.status(500).json({message: 'Error happened while retrieving games'});
+            console.log(error);
+            res.status(500).json({message: error.message});
         }
     })
     .post(async (req, res) => {

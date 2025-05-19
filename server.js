@@ -6,7 +6,7 @@ const cors = require("cors");
 const {connectToDatabase, initializeTables, generateEntities} = require("./sequalize/games")
 const {connectToDatabaseForUsers, initializeUserTable} = require("./sequalize/users");
 
-const allowedOrigins = ['http://localhost:3000', 'https://www.google.com', 'http://localhost:8080'];
+const allowedOrigins = ['http://localhost:3000', 'https://www.google.com', 'http://localhost:8080', "https://nodejs-serverless-function-express-gamma-one.vercel.app"];
 const app = express();
 const port = 8080;
 
