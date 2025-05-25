@@ -24,14 +24,18 @@ app.use('/actions', actionRoute);
 
 module.exports = app;
 
-app.listen(port, async () => {
-    await connectToDatabase();
-    await initializeTables();
+let production = true;
 
-    await connectToDatabaseForUsers();
-    await initializeUserTable();
+if (!production) {
+    app.listen(port, async () => {
+        await connectToDatabase();
+        await initializeTables();
 
-    await generateEntities(0);
+        await connectToDatabaseForUsers();
+        await initializeUserTable();
 
-    console.log(`Server running on port ${port}`);
-});
+        await generateEntities(0);
+
+        console.log(`Server running on port ${port}`);
+    });
+}
