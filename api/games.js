@@ -1,7 +1,7 @@
 const {Router} = require("express");
 const {z} = require("zod");
 const {returnGames, findGameIdByName, createNewGame, findGameById, deleteGameById,
-    findGameByNameWithDifferentId, updateGame, findGamesByName, getGamesOrderedByAttribute, getMaximumId} = require('../sequalize/games');
+    findGameByNameWithDifferentId, updateGame, findGamesByName, getGamesOrderedByName} = require('../sequalize/games');
 
 const gameSchema = z.object({
     name: z.string().min(3),
@@ -14,19 +14,12 @@ const gameSchema = z.object({
 
 const router = Router();
 
-let lastIdGet = 0;
-
 router.route('/')
     .get(async (req, res) => {
         try {
             console.log("new request")
-            const {games, id} = await returnGames(lastIdGet);
+            const games = await returnGames();
             console.log(games);
-            lastIdGet = id;
-
-            if (lastIdGet > await getMaximumId()) {
-                lastIdGet = 0;
-            }
 
             res.json(games);
         } catch (error) {
@@ -138,7 +131,9 @@ router.route('/filter')
 router.route('/sort')
     .get(async (req, res) => {
         try {
-            const result = await getGamesOrderedByAttribute();
+            console.log("new request")
+            const result = await getGamesOrderedByName();
+            console.log(result);
             res.json(result);
         } catch (error) {
             res.status(500).json({ message: 'Error happened while retrieving games' });

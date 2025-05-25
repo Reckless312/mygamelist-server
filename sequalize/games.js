@@ -28,12 +28,6 @@ async function generateEntities(size){
 const sequelize = new Sequelize("postgres://postgres.uutgjvlxpphpavxsscsw:RiT4MUjw4v2wuPZU@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=disable&supa=base-pooler.x", {
     dialect: 'postgres',
     dialectModule: pg,
-    /*dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false // <<<<<< THIS LINE
-        }
-    }*/
 });
 
 const Game = sequelize.define('GAME', {
@@ -105,11 +99,9 @@ async function initializeTables(){
     }
 }
 
-async function returnGames(lastId){
-    const games = await Game.findAll({
-        where: {id: {[Op.gt]: lastId}},
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}], limit: 100});
-    return {games, id: games.length ? games[games.length - 1].id : null};
+async function returnGames(){
+    return await Game.findAll({
+        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]});
 }
 
 async function findGameIdByName(name){
@@ -169,13 +161,6 @@ async function findGameByNameWithDifferentId(name, id){
     })
 }
 
-async function getMaximumId() {
-    const id = await sequelize.query(
-        'SELECT MAX(id) FROM public."GAMEs"',
-    );
-    return Number(id[0][0].max);
-}
-
 async function updateGame(id, name, description, image, tag, price, releaseDate){
     await Game.update({
         name: name,
@@ -205,32 +190,17 @@ async function findGamesByName(name){
                 [Op.iLike]: `%${name}%`
             }
         },
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}], limit: 100
+        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]
     })
 }
 
-async function getGamesOrderedByAttribute(lastId, attribute, sortingCode){
-    const games = await Game.findAll({
-        where: {id: {[Op.gt]: lastId}},
-        order: [[attribute, getSortingOrder(sortingCode)]],
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}], limit: 100})
-    return {games, id: games.length ? games[games.length - 1].id : null};
-}
-
-function getSortingOrder(sortingCode){
-    let sortingOrder;
-    switch(sortingCode){
-        case true:
-            sortingOrder = 'ASC';
-            break;
-        case false:
-            sortingOrder = 'DESC';
-            break;
-    }
-    return sortingOrder;
+async function getGamesOrderedByName(){
+    return await Game.findAll({
+        order: [['name', 'ASC']],
+        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]})
 }
 
 module.exports = {
     connectToDatabase, initializeTables, returnGames, findGameIdByName, createNewGame, findGameById, deleteGameById, findGameByNameWithDifferentId,
-    updateGame, findGamesByName, getGamesOrderedByAttribute, generateEntities, getMaximumId
+    updateGame, findGamesByName, getGamesOrderedByName, generateEntities
 }

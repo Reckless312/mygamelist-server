@@ -1,0 +1,47 @@
+###
+GET http://localhost:8080/api/games
+
+###
+DELETE http://localhost:8080/api/games
+Content-Type: application/json
+
+{
+  "id": 1
+}
+
+###
+POST http://localhost:8080/api/games
+Content-Type: application/json
+
+{
+  "name": "Far Cry® 4",
+  "description": " Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence. You are Ajay Ghale. Traveling to Kyrat to fulfill your mother’s dying wish, you find yourself caught up in a civil war to overthrow the oppressive regime of dictator Pagan Min. ",
+  "image": "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg?t=1739176495",
+  "releaseDate": "2014-11-18",
+  "price": 30,
+  "tag": "Open World"
+}
+###
+PATCH http://localhost:8080/api/games
+Content-Type: application/json
+
+{
+  "id": 4,
+  "name": "Far Cry® 5",
+  "description": " Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence. You are Ajay Ghale. Traveling to Kyrat to fulfill your mother’s dying wish, you find yourself caught up in a civil war to overthrow the oppressive regime of dictator Pagan Min. ",
+  "image": "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg?t=1739176495",
+  "releaseDate": "2014-11-18",
+  "price": 30,
+  "tag": "Open World"
+}
+
+###
+POST http://localhost:8080/api/games/filter/id
+Content-Type: application/json
+
+{
+  "id": 4
+}
+
+###
+GET http://localhost:8080/api/games/sort
