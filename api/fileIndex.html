@@ -47,7 +47,7 @@
                 formData.append(myFiles.item(key).name, myFiles.item(key))
             })
 
-            const response = await fetch('http://localhost:8080/upload', {
+            const response = await fetch('https://nodejs-serverless-function-express-gamma-one.vercel.app/upload', {
                 method: 'POST',
                 body: formData,
             });
@@ -74,7 +74,7 @@
         const added = [];
 
         const showFiles = async () => {
-            const response = await fetch('http://localhost:8080/files');
+            const response = await fetch('https://nodejs-serverless-function-express-gamma-one.vercel.app/files');
             const json = await response.json();
 
             console.log(json);
@@ -88,7 +88,7 @@
             for (const file of files) {
                 console.log(file);
                 const a = document.createElement('a');
-                a.href = `http://localhost:8080/download?file=${file}`;
+                a.href = `https://nodejs-serverless-function-express-gamma-one.vercel.app/download?file=${file}`;
                 a.innerText = file;
                 const br = document.createElement('br');
                 added.push(a);
