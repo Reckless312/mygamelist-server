@@ -7,8 +7,9 @@ const sequelize = new Sequelize("postgres://neondb_owner:npg_hGEUP0L1Vbov@ep-ora
     dialectModule: pg,
 });
 
-const Game = sequelize.define('GAME', {
-    id: {
+const game = sequelize.define('Game', {
+    id:
+    {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
@@ -16,47 +17,71 @@ const Game = sequelize.define('GAME', {
     name: {
         type: DataTypes.TEXT,
         allowNull: false,
+        unique: true,
         index: true,
     },
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    banner_url: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+});
+
+const game_images = sequelize.define('Game_Images', {
+    image_url: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+});
+
+const game_release_date = sequelize.define("Game_Release_Date", {
     releaseDate: {
         type: DataTypes.DATEONLY,
         allowNull: false,
-    },
+    }
+});
+
+const game_price = sequelize.define("Game_Prices", {
     price: {
         type: DataTypes.FLOAT,
         allowNull: true,
-    },
+    }
+});
+
+const game_tags = sequelize.define("Game_Tags", {
     tag: {
         type: DataTypes.TEXT,
         allowNull: false,
     }
 });
 
-const GameDescription = sequelize.define('GAME_DESCRIPTION', {
-    description: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    }
-});
-
-const GameImage = sequelize.define('GAME_IMAGE', {
-    image: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-});
-
-Game.hasMany(GameDescription, {
+game.hasMany(game_images, {
     foreignKey: 'gameId',
     onDelete: 'CASCADE',
 });
-GameDescription.belongsTo(Game);
 
-Game.hasMany(GameImage, {
+game.hasOne(game_release_date, {
     foreignKey: 'gameId',
     onDelete: 'CASCADE',
-});
-GameImage.belongsTo(Game);
+})
+
+game.hasOne(game_price, {
+    foreignKey: 'gameId',
+    onDelete: 'CASCADE',
+})
+
+game.hasMany(game_tags, {
+    foreignKey: 'gameId',
+    onDelete: 'CASCADE',
+})
+
+game_images.belongsTo(game);
+game_release_date.belongsTo(game);
+game_price.belongsTo(game);
+game_tags.belongsTo(game);
 
 async function connectToDatabase() {
     try{
@@ -76,108 +101,140 @@ async function initializeTables(){
     }
 }
 
-async function returnGames(){
-    return await Game.findAll({
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]});
-}
+async function createNewGame(name, description, banner, image, tag, price, releaseDate){
 
-async function findGameIdByName(name){
-    return await Game.findOne({
-        where: {
-            name: name
-        },
-        attributes: ['id']
-    })
-}
-
-async function createNewGame(name, description, image, tag, price, releaseDate){
-
-    await Game.create({
+    await game.create({
         name: name,
-        releaseDate: releaseDate,
-        price: price,
-        tag: tag
-    })
-
-    const addedGame = await findGameIdByName(name);
-
-    await GameImage.create({
-        image: image,
-        gameId: addedGame.id
-    })
-
-    await GameDescription.create({
         description: description,
+        banner_url: banner
+    })
+
+    const addedGame = (await findGamesByName(name))[0];
+
+    await createNewImage(image, addedGame.id);
+
+    await game_release_date.create(({
+        releaseDate: releaseDate,
+        gameId: addedGame.id
+    }))
+
+    await game_price.create({
+        price: price,
         gameId: addedGame.id
     })
+
+    await game_tags.create({
+        tag: tag,
+        gameId: addedGame.id
+    })
+}
+
+async function returnGames(){
+    return await game.findAll({
+        include: includeOptions()});
 }
 
 async function findGameById(id){
-    return await Game.findOne({
+    return await game.findOne({
         where: {
             id: id
         },
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]
+        include: includeOptions()
     })
 }
 
 async function deleteGameById(id){
-    await Game.destroy({
+    await game.destroy({
         where: {id}
     })
 }
 
-async function findGameByNameWithDifferentId(name, id){
-    return await Game.findOne({
-        where: {
-            name: name,
-            id: {[Op.ne]: id}
-        },
-        attributes: ['id'],
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]
-    })
-}
-
-async function updateGame(id, name, description, image, tag, price, releaseDate){
-    await Game.update({
+async function updateGame(id, name, banner, description, image, tag, price, releaseDate){
+    await game.update({
         name: name,
-        releaseDate: releaseDate,
-        tag: tag,
-        price: price,
+        description: description,
+        banner_url: banner
     }, {
         where: {id: id}
     })
 
-    const gameImage = await GameImage.findOne({
+    const gameImages = await game_images.findAll({
         where: {gameId: id}
     })
 
-    const gameDescription = await GameDescription.findOne({
+    const gameReleaseDate = await game_release_date.findOne({
         where: {gameId: id}
     })
 
-    await GameImage.upsert({image: image, id: gameImage.id});
-    await GameDescription.upsert({description: description, id: gameDescription.id});
+    const gamePrice = await game_price.findOne({
+        where: {gameId: id}
+    })
+
+    const gameTags = await game_release_date.findAll({
+        where: {gameId: id}
+    })
+
+    for (const images in gameImages) {
+        await game_images.destroy({
+            where: {id: images.id}
+        });
+    }
+
+    for (const tag in gameTags) {
+        await game_tags.destroy({
+            where: {id: tag.id}
+        });
+    }
+
+    await createNewImage(image, id);
+    await createNewTags(tag, id);
+
+    await game_release_date.upsert({releaseDate: releaseDate, id: gameReleaseDate.id});
+    await game_price.upsert({price: price, id: gamePrice.id});
 }
 
 async function findGamesByName(name){
-    return await Game.findAll({
+    return await game.findAll({
         where: {
             name: {
                 [Op.iLike]: `%${name}%`
             }
         },
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]
+        include: includeOptions()
     })
 }
 
 async function getGamesOrderedByName(){
-    return await Game.findAll({
+    return await game.findAll({
         order: [['name', 'ASC']],
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]})
+        include: includeOptions()
+    })
+}
+
+function includeOptions() {
+    return [{model: game_images, attributes: ['image_url']}, {model: game_release_date, attributes: ['releaseDate']},
+        {model: game_price, attributes: ['price']}, {model: game_tags, attributes: ['tag']}]
+}
+
+async function createNewImage(images, game_id) {
+    for (const image_url in images) {
+        await game_images.create({
+            image_url: image_url,
+            gameId: game_id
+        })
+    }
+}
+
+async function createNewTags(tags, game_id) {
+    for (const tag in tags) {
+        await game_tags.create({
+            tag: tag,
+            gameId: game_id
+        })
+    }
 }
 
 module.exports = {
-    connectToDatabase, initializeTables, returnGames, findGameIdByName, createNewGame, findGameById, deleteGameById, findGameByNameWithDifferentId,
-    updateGame, findGamesByName, getGamesOrderedByName
+    connectToDatabase, initializeTables, returnGames, createNewGame, findGameById,
+    deleteGameById, updateGame, findGamesByName, getGamesOrderedByName
 }
