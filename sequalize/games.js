@@ -28,6 +28,14 @@ const game = sequelize.define('Game', {
         type: DataTypes.TEXT,
         allowNull: false
     },
+    releaseDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+    },
+    price: {
+        type: DataTypes.FLOAT,
+        allowNull: true,
+    }
 });
 
 const game_images = sequelize.define('Game_Images', {
@@ -35,20 +43,6 @@ const game_images = sequelize.define('Game_Images', {
         type: DataTypes.TEXT,
         allowNull: false
     },
-});
-
-const game_release_date = sequelize.define("Game_Release_Date", {
-    releaseDate: {
-        type: DataTypes.DATEONLY,
-        allowNull: false,
-    }
-});
-
-const game_price = sequelize.define("Game_Prices", {
-    price: {
-        type: DataTypes.FLOAT,
-        allowNull: true,
-    }
 });
 
 const game_tags = sequelize.define("Game_Tags", {
@@ -63,24 +57,12 @@ game.hasMany(game_images, {
     onDelete: 'CASCADE',
 });
 
-game.hasOne(game_release_date, {
-    foreignKey: 'gameId',
-    onDelete: 'CASCADE',
-})
-
-game.hasOne(game_price, {
-    foreignKey: 'gameId',
-    onDelete: 'CASCADE',
-})
-
 game.hasMany(game_tags, {
     foreignKey: 'gameId',
     onDelete: 'CASCADE',
 })
 
 game_images.belongsTo(game);
-game_release_date.belongsTo(game);
-game_price.belongsTo(game);
 game_tags.belongsTo(game);
 
 async function connectToDatabase() {
@@ -101,32 +83,21 @@ async function initializeTables(){
     }
 }
 
-async function createNewGame(name, description, banner, image, tag, price, releaseDate){
+async function createNewGame(name, description, banner, image, tags, price, releaseDate){
 
     await game.create({
         name: name,
         description: description,
-        banner_url: banner
+        banner_url: banner,
+        releaseDate: releaseDate,
+        price: price,
     })
 
     const addedGame = (await findGamesByName(name))[0];
 
     await createNewImage(image, addedGame.id);
 
-    await game_release_date.create(({
-        releaseDate: releaseDate,
-        gameId: addedGame.id
-    }))
-
-    await game_price.create({
-        price: price,
-        gameId: addedGame.id
-    })
-
-    await game_tags.create({
-        tag: tag,
-        gameId: addedGame.id
-    })
+    await createNewTags(tags, addedGame.id);
 }
 
 async function returnGames(){
@@ -153,7 +124,9 @@ async function updateGame(id, name, banner, description, image, tag, price, rele
     await game.update({
         name: name,
         description: description,
-        banner_url: banner
+        banner_url: banner,
+        releaseDate: releaseDate,
+        price: price,
     }, {
         where: {id: id}
     })
@@ -162,35 +135,15 @@ async function updateGame(id, name, banner, description, image, tag, price, rele
         where: {gameId: id}
     })
 
-    const gameReleaseDate = await game_release_date.findOne({
+    const gameTags = await game_tags.findAll({
         where: {gameId: id}
     })
 
-    const gamePrice = await game_price.findOne({
-        where: {gameId: id}
-    })
-
-    const gameTags = await game_release_date.findAll({
-        where: {gameId: id}
-    })
-
-    for (const images in gameImages) {
-        await game_images.destroy({
-            where: {id: images.id}
-        });
-    }
-
-    for (const tag in gameTags) {
-        await game_tags.destroy({
-            where: {id: tag.id}
-        });
-    }
+    await destroyOldImages(gameImages, id);
+    await destroyOldTags(gameTags, id);
 
     await createNewImage(image, id);
     await createNewTags(tag, id);
-
-    await game_release_date.upsert({releaseDate: releaseDate, id: gameReleaseDate.id});
-    await game_price.upsert({price: price, id: gamePrice.id});
 }
 
 async function findGamesByName(name){
@@ -212,8 +165,7 @@ async function getGamesOrderedByName(){
 }
 
 function includeOptions() {
-    return [{model: game_images, attributes: ['image_url']}, {model: game_release_date, attributes: ['releaseDate']},
-        {model: game_price, attributes: ['price']}, {model: game_tags, attributes: ['tag']}]
+    return [{model: game_images, attributes: ['image_url']}, {model: game_tags, attributes: ['tag']}]
 }
 
 async function createNewImage(images, game_id) {
@@ -231,6 +183,22 @@ async function createNewTags(tags, game_id) {
             tag: tag,
             gameId: game_id
         })
+    }
+}
+
+async function destroyOldImages(images, game_id) {
+    for (const image in images) {
+        await game_images.destroy({
+            where: {id: image.id}
+        });
+    }
+}
+
+async function destroyOldTags(tags, game_id) {
+    for (const tag in tags) {
+        await game_tags.destroy({
+            where: {id: tag.id}
+        });
     }
 }
 
