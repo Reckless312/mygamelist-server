@@ -60,10 +60,15 @@ game.hasMany(game_images, {
 game.hasMany(game_tags, {
     foreignKey: 'gameId',
     onDelete: 'CASCADE',
-})
+});
 
-game_images.belongsTo(game);
-game_tags.belongsTo(game);
+game_images.belongsTo(game, {
+    foreignKey: 'gameId',
+});
+game_tags.belongsTo(game, {
+    foreignKey: 'gameId',
+});
+
 
 async function connectToDatabase() {
     try{
@@ -157,6 +162,14 @@ async function findGamesByName(name){
     })
 }
 
+async function findGameByName(name){
+    return await game.findOne({
+        where: {
+            name: name
+        },
+    })
+}
+
 async function getGamesOrderedByName(){
     return await game.findAll({
         order: [['name', 'ASC']],
@@ -169,7 +182,7 @@ function includeOptions() {
 }
 
 async function createNewImage(images, game_id) {
-    for (const image_url in images) {
+    for (const image_url of images) {
         await game_images.create({
             image_url: image_url,
             gameId: game_id
@@ -178,7 +191,7 @@ async function createNewImage(images, game_id) {
 }
 
 async function createNewTags(tags, game_id) {
-    for (const tag in tags) {
+    for (const tag of tags) {
         await game_tags.create({
             tag: tag,
             gameId: game_id
@@ -187,7 +200,7 @@ async function createNewTags(tags, game_id) {
 }
 
 async function destroyOldImages(images, game_id) {
-    for (const image in images) {
+    for (const image of images) {
         await game_images.destroy({
             where: {id: image.id}
         });
@@ -195,7 +208,7 @@ async function destroyOldImages(images, game_id) {
 }
 
 async function destroyOldTags(tags, game_id) {
-    for (const tag in tags) {
+    for (const tag of tags) {
         await game_tags.destroy({
             where: {id: tag.id}
         });
@@ -204,5 +217,5 @@ async function destroyOldTags(tags, game_id) {
 
 module.exports = {
     connectToDatabase, initializeTables, returnGames, createNewGame, findGameById,
-    deleteGameById, updateGame, findGamesByName, getGamesOrderedByName
+    deleteGameById, updateGame, findGameByName, findGamesByName, getGamesOrderedByName
 }

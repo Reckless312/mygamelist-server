@@ -1,15 +1,16 @@
 const {Router} = require("express");
 const {z} = require("zod");
-const {returnGames, findGameIdByName, createNewGame, findGameById, deleteGameById,
-    findGameByNameWithDifferentId, updateGame, findGamesByName, getGamesOrderedByName} = require('../sequalize/games');
+const {returnGames, createNewGame, findGameById, deleteGameById,
+    updateGame, findGameByName, findGamesByName, getGamesOrderedByName} = require('../sequalize/games');
 
 const gameSchema = z.object({
     name: z.string().min(3),
     description: z.string().min(10),
-    image: z.string().url(),
+    banner_url: z.string().url(),
+    images: z.array(z.string().url()),
     releaseDate: z.string().date(),
     price: z.number().nonnegative().max(100),
-    tag: z.string().min(3),
+    tags: z.array(z.string().min(3)),
 });
 
 const router = Router();
@@ -17,10 +18,7 @@ const router = Router();
 router.route('/')
     .get(async (req, res) => {
         try {
-            console.log("new request")
             const games = await returnGames();
-            console.log(games);
-
             res.json(games);
         } catch (error) {
             console.log(error);
@@ -29,24 +27,11 @@ router.route('/')
     })
     .post(async (req, res) => {
         try {
-
-            if (req.body === undefined || req.body?.name === undefined || req.body?.description === undefined || req.body?.image === undefined || req.body?.releaseDate === undefined || req.body?.price === undefined || req.body?.tag === undefined)
-            {
-                return res.status(404).json({ message: 'Missing required fields' });
-            }
-
-            const validation = gameSchema.safeParse(req.body);
-            if (!validation.success) {
-                return res.status(400).json({ message: 'Validation for input failed!' });
+            if (await validateClientInput(Validation.DEFAULT_POST, req.body) === false) {
+                return res.status(404).json({ message: 'Validation failed for the given data!' });
             }
 
             const { name, description, image, releaseDate, price, tag } = req.body;
-
-            const existing = await findGameIdByName(name);
-
-            if (existing) {
-                return res.status(401).json({ message: 'Game already found with same critical information' });
-            }
 
             await createNewGame(name, description, image, tag, price, releaseDate);
 
@@ -56,18 +41,11 @@ router.route('/')
         }
     }).delete(async (req, res) => {
     try {
-        if (req.body === undefined)
-        {
-            return res.status(400).json({ message: 'Game id required' });
+        if (await validateClientInput(Validation.DEFAULT_POST, req.body) === false) {
+            return res.status(404).json({ message: 'Validation failed for the given data!' });
         }
 
         const { id } = req.body;
-
-        const existing = await findGameById(id);
-
-        if (existing.rowCount === 0) {
-            return res.status(401).json({ message: 'Game id not found!' });
-        }
 
         await deleteGameById(id);
 
@@ -78,30 +56,11 @@ router.route('/')
 })
     .patch(async (req, res) => {
         try {
-            const validation = gameSchema.passthrough().safeParse(req.body);
-
-            if (!validation.success) {
-                return res.status(400).json({ message: 'Validation for input failed!' });
-            }
-
-            if (req.body === undefined || req.body?.id === undefined || req.body?.name === undefined || req.body?.description === undefined || req.body?.image === undefined || req.body?.releaseDate === undefined || req.body?.price === undefined || req.body?.tag === undefined)
-            {
-                return res.status(401).json({ message: 'Missing required fields' });
+            if (await validateClientInput(Validation.DEFAULT_PATCH, req.body) === false) {
+                return res.status(404).json({ message: 'Validation failed for the given data!' });
             }
 
             const {id, name, description, image, releaseDate, price, tag } = req.body;
-
-            const existing = findGameById(id);
-
-            if (!existing) {
-                return res.status(402).json({ message: 'Game id not found!' });
-            }
-
-            const nameCheck = await findGameByNameWithDifferentId(name, id);
-
-            if (nameCheck) {
-                return res.status(403).json({ message: 'Game already found with same critical information' });
-            }
 
             await updateGame(id, name, description, image, tag, price, releaseDate);
 
@@ -114,8 +73,8 @@ router.route('/')
 router.route('/filter')
     .post(async (req, res) => {
         try {
-            if (req.body === undefined || req.body?.name === undefined) {
-                return res.status(404).json({ message: 'Missing required fields' });
+            if (await validateClientInput(Validation.DEFAULT_FILTER, req.body) === false) {
+                return res.status(404).json({ message: 'Validation failed for the given data!' });
             }
 
             const { name } = req.body;
@@ -131,9 +90,7 @@ router.route('/filter')
 router.route('/sort')
     .get(async (req, res) => {
         try {
-            console.log("new request")
             const result = await getGamesOrderedByName();
-            console.log(result);
             res.json(result);
         } catch (error) {
             res.status(500).json({ message: 'Error happened while retrieving games' });
@@ -143,8 +100,8 @@ router.route('/sort')
 router.route('/filter/id')
     .post(async (req, res) => {
         try {
-            if (req.body === undefined || req.body?.id === undefined) {
-                return res.status(404).json({ message: 'Missing required fields' });
+            if (await validateClientInput(Validation.DEFAULT_FILTER_ID, req.body) === false) {
+                return res.status(404).json({ message: 'Validation failed for the given data!' });
             }
 
             const { id } = req.body;
@@ -156,5 +113,70 @@ router.route('/filter/id')
             res.status(500).json({ message: 'Error happened while filtering games' });
         }
     })
+
+const Validation = {
+    DEFAULT_GET: "DEFAULT_GET",
+    DEFAULT_POST: "DEFAULT_POST",
+    DEFAULT_PATCH: "DEFAULT_PATCH",
+    DEFAULT_DELETE: "DEFAULT_DELETE",
+    DEFAULT_FILTER: "DEFAULT_FILTER",
+    DEFAULT_FILTER_ID: "DEFAULT_FILTER_ID",
+}
+
+async function validateClientInput(method, body) {
+    let components;
+    switch (method) {
+        case Validation.DEFAULT_GET:
+            return true;
+        case Validation.DEFAULT_POST:
+            components = [body, body?.name, body?.description, body?.image, body?.banner_url, body?.releaseDate, body?.price, body?.tag]
+
+            return !checkUndefinedElementsInArray(components) && checkZodIntegrity(body) && !await checkGameExistanceByName(body?.name);
+        case Validation.DEFAULT_PATCH:
+            components = [body, body?.id, body?.name, body?.description, body?.image, body?.banner_url, body?.releaseDate, body?.price, body?.tag];
+
+            return !checkUndefinedElementsInArray(components) && checkZodIntegrity(body) && await checkGameExistanceById(body?.id) && await checkUniqueName(body?.name, body?.id);
+        case Validation.DEFAULT_DELETE:
+            components = [body];
+
+            return !checkUndefinedElementsInArray(components) && checkZodIntegrity(body) && await checkGameExistanceById(body?.id);
+        case Validation.DEFAULT_FILTER:
+            components = [body, body?.name];
+
+            return !checkUndefinedElementsInArray(components);
+        case Validation.DEFAULT_FILTER_ID:
+            components = [body, body?.id];
+
+            return !checkUndefinedElementsInArray(components);
+    }
+}
+
+function checkUndefinedElementsInArray(array) {
+    for (const element of array) {
+        if (element === undefined) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function checkZodIntegrity(data) {
+    const validation = gameSchema.safeParse(data);
+    return validation.success;
+}
+
+async function checkGameExistanceByName(name) {
+    return await findGameByName(name) !== undefined;
+}
+
+async function checkGameExistanceById(id) {
+    return await findGameById(id) !== undefined;
+}
+
+async function checkUniqueName(name, id) {
+    const game = await findGameByName(name);
+
+    return game === undefined || game.id === id;
+}
 
 module.exports = router;
