@@ -1,37 +1,15 @@
 const {Sequelize, DataTypes} = require("sequelize");
 const {Op} = require("@sequelize/core")
-const {faker} = require("@faker-js/faker")
-const {randomInt} = require("node:crypto");
-const {gameTitles, imageUrls, uniqueGameTags, gameDescriptions} = require("../videogames")
 const {pg} = require("pg");
 
-async function generateEntities(size){
-    for (let i = 0; i < size; i++) {
-        // Faker sucks so I am hardcoding, also there shouldn't be games with same name or others identical
-        // Should be unique if only ran once on a clean database
-        const name = gameTitles[randomInt(0, gameTitles.length)] + " " + faker.book.title() + " " + i.toString();
-        const releaseDate = faker.date.past({years: 34}).toISOString().split('T')[0];
-        const price = faker.number.float({min: 0, max: 100, multipleOf: 0.5}).toFixed(2);
-        const tag = uniqueGameTags[randomInt(0, uniqueGameTags.length)];
-        const description = gameDescriptions[randomInt(0, gameDescriptions.length)] + " " + faker.word.sample() + " " + i.toString();
-        const image = imageUrls[randomInt(0, imageUrls.length)]
-
-        try{
-            await createNewGame(name, description, image, tag, price, releaseDate);
-        }catch{
-        }
-
-        console.log(i);
-    }
-}
-
-const sequelize = new Sequelize("postgres://postgres.uutgjvlxpphpavxsscsw:RiT4MUjw4v2wuPZU@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=disable&supa=base-pooler.x", {
+const sequelize = new Sequelize("postgres://neondb_owner:npg_hGEUP0L1Vbov@ep-orange-darkness-a2u2vo14-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require", {
     dialect: 'postgres',
     dialectModule: pg,
 });
 
-const Game = sequelize.define('GAME', {
-    id: {
+const game = sequelize.define('Game', {
+    id:
+    {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
@@ -39,7 +17,16 @@ const Game = sequelize.define('GAME', {
     name: {
         type: DataTypes.TEXT,
         allowNull: false,
+        unique: true,
         index: true,
+    },
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: false
+    },
+    banner_url: {
+        type: DataTypes.TEXT,
+        allowNull: false
     },
     releaseDate: {
         type: DataTypes.DATEONLY,
@@ -48,38 +35,40 @@ const Game = sequelize.define('GAME', {
     price: {
         type: DataTypes.FLOAT,
         allowNull: true,
+    }
+});
+
+const game_images = sequelize.define('Game_Images', {
+    image_url: {
+        type: DataTypes.TEXT,
+        allowNull: false
     },
+});
+
+const game_tags = sequelize.define("Game_Tags", {
     tag: {
         type: DataTypes.TEXT,
         allowNull: false,
     }
 });
 
-const GameDescription = sequelize.define('GAME_DESCRIPTION', {
-    description: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    }
-});
-
-const GameImage = sequelize.define('GAME_IMAGE', {
-    image: {
-        type: DataTypes.TEXT,
-        allowNull: false
-    },
-});
-
-Game.hasMany(GameDescription, {
+game.hasMany(game_images, {
     foreignKey: 'gameId',
     onDelete: 'CASCADE',
 });
-GameDescription.belongsTo(Game);
 
-Game.hasMany(GameImage, {
+game.hasMany(game_tags, {
     foreignKey: 'gameId',
     onDelete: 'CASCADE',
 });
-GameImage.belongsTo(Game);
+
+game_images.belongsTo(game, {
+    foreignKey: 'gameId',
+});
+game_tags.belongsTo(game, {
+    foreignKey: 'gameId',
+});
+
 
 async function connectToDatabase() {
     try{
@@ -99,108 +88,134 @@ async function initializeTables(){
     }
 }
 
-async function returnGames(){
-    return await Game.findAll({
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]});
-}
+async function createNewGame(name, description, banner, image, tags, price, releaseDate){
 
-async function findGameIdByName(name){
-    return await Game.findOne({
-        where: {
-            name: name
-        },
-        attributes: ['id']
-    })
-}
-
-async function createNewGame(name, description, image, tag, price, releaseDate){
-
-    await Game.create({
+    await game.create({
         name: name,
+        description: description,
+        banner_url: banner,
         releaseDate: releaseDate,
         price: price,
-        tag: tag
     })
 
-    const addedGame = await findGameIdByName(name);
+    const addedGame = (await findGamesByName(name))[0];
 
-    await GameImage.create({
-        image: image,
-        gameId: addedGame.id
-    })
+    await createNewImage(image, addedGame.id);
 
-    await GameDescription.create({
-        description: description,
-        gameId: addedGame.id
-    })
+    await createNewTags(tags, addedGame.id);
+}
+
+async function returnGames(){
+    return await game.findAll({
+        include: includeOptions()});
 }
 
 async function findGameById(id){
-    return await Game.findOne({
+    return await game.findOne({
         where: {
             id: id
         },
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]
+        include: includeOptions()
     })
 }
 
 async function deleteGameById(id){
-    await Game.destroy({
+    await game.destroy({
         where: {id}
     })
 }
 
-async function findGameByNameWithDifferentId(name, id){
-    return await Game.findOne({
-        where: {
-            name: name,
-            id: {[Op.ne]: id}
-        },
-        attributes: ['id'],
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]
-    })
-}
-
-async function updateGame(id, name, description, image, tag, price, releaseDate){
-    await Game.update({
+async function updateGame(id, name, banner, description, image, tag, price, releaseDate){
+    await game.update({
         name: name,
+        description: description,
+        banner_url: banner,
         releaseDate: releaseDate,
-        tag: tag,
         price: price,
     }, {
         where: {id: id}
     })
 
-    const gameImage = await GameImage.findOne({
+    const gameImages = await game_images.findAll({
         where: {gameId: id}
     })
 
-    const gameDescription = await GameDescription.findOne({
+    const gameTags = await game_tags.findAll({
         where: {gameId: id}
     })
 
-    await GameImage.upsert({image: image, id: gameImage.id});
-    await GameDescription.upsert({description: description, id: gameDescription.id});
+    await destroyOldImages(gameImages, id);
+    await destroyOldTags(gameTags, id);
+
+    await createNewImage(image, id);
+    await createNewTags(tag, id);
 }
 
 async function findGamesByName(name){
-    return await Game.findAll({
+    return await game.findAll({
         where: {
             name: {
                 [Op.iLike]: `%${name}%`
             }
         },
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]
+        include: includeOptions()
+    })
+}
+
+async function findGameByName(name){
+    return await game.findOne({
+        where: {
+            name: name
+        },
     })
 }
 
 async function getGamesOrderedByName(){
-    return await Game.findAll({
+    return await game.findAll({
         order: [['name', 'ASC']],
-        include: [{model: GameDescription, attributes: ['description'], limit: 1}, {model: GameImage, attributes: ['image'], limit: 1}]})
+        include: includeOptions()
+    })
+}
+
+function includeOptions() {
+    return [{model: game_images, attributes: ['image_url']}, {model: game_tags, attributes: ['tag']}]
+}
+
+async function createNewImage(images, game_id) {
+    for (const image_url of images) {
+        await game_images.create({
+            image_url: image_url,
+            gameId: game_id
+        })
+    }
+}
+
+async function createNewTags(tags, game_id) {
+    for (const tag of tags) {
+        await game_tags.create({
+            tag: tag,
+            gameId: game_id
+        })
+    }
+}
+
+async function destroyOldImages(images, game_id) {
+    for (const image of images) {
+        await game_images.destroy({
+            where: {id: image.id}
+        });
+    }
+}
+
+async function destroyOldTags(tags, game_id) {
+    for (const tag of tags) {
+        await game_tags.destroy({
+            where: {id: tag.id}
+        });
+    }
 }
 
 module.exports = {
-    connectToDatabase, initializeTables, returnGames, findGameIdByName, createNewGame, findGameById, deleteGameById, findGameByNameWithDifferentId,
-    updateGame, findGamesByName, getGamesOrderedByName, generateEntities
+    connectToDatabase, initializeTables, returnGames, createNewGame, findGameById,
+    deleteGameById, updateGame, findGameByName, findGamesByName, getGamesOrderedByName
 }
