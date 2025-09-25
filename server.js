@@ -1,7 +1,8 @@
 const express = require('express');
 const gamesRoute = require("./api/games");
 const cors = require("cors");
-const {connectToDatabase, initializeTables} = require("./sequalize/games")
+const {connectToDatabase, initializeGameTables} = require("./sequalize/games")
+const {initializeUserTable} = require("./sequalize/users")
 
 const app = express();
 const port = 8080;
@@ -16,7 +17,8 @@ module.exports = app;
 
 app.listen(port, async () => {
     await connectToDatabase();
-    await initializeTables();
+    await initializeGameTables();
+    await initializeUserTable();
 
     console.log(`Server running on port ${port}`);
 });

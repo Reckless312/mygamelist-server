@@ -79,7 +79,7 @@ async function connectToDatabase() {
     }
 }
 
-async function initializeTables(){
+async function initializeGameTables(){
     try{
         await sequelize.sync();
     }
@@ -216,6 +216,6 @@ async function destroyOldTags(tags, game_id) {
 }
 
 module.exports = {
-    connectToDatabase, initializeTables, returnGames, createNewGame, findGameById,
+    connectToDatabase, initializeGameTables, returnGames, createNewGame, findGameById,
     deleteGameById, updateGame, findGameByName, findGamesByName, getGamesOrderedByName
 }
