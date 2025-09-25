@@ -1,15 +1,15 @@
 import {Router} from "express";
-import {checkCredentials, createNewSession} from "../sequalize/users";
+import {createNewSession, registerNewUser} from "../sequalize/users";
 
 const router = Router();
 
 router.route('/').post(async (req, res) => {
     const {username, password} = req.body;
 
-    const user = await checkCredentials(username, password);
+    const user = await registerNewUser(username, password);
 
     if (!user) {
-        return res.status(401).json({message: 'Invalid credentials'});
+        return res.status(401).json({message: 'Username already exists'});
     }
 
     const sessionId = await createNewSession(user.id);
@@ -20,7 +20,7 @@ router.route('/').post(async (req, res) => {
         maxAge: 1000 * 60 * 60 * 24,
     });
 
-    return res.status(200).json({message: 'Logged in successfully'});
+    return res.status(200).json({message: 'Registered successfully'});
 })
 
 module.exports = router;
