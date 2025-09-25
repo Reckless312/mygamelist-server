@@ -1,13 +1,14 @@
 const {Sequelize, DataTypes} = require("sequelize");
 const {Op} = require("@sequelize/core")
 const {pg} = require("pg");
+const bcrypt = require("bcrypt");
 
 const sequelize = new Sequelize("postgres://neondb_owner:npg_hGEUP0L1Vbov@ep-orange-darkness-a2u2vo14-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require", {
     dialect: 'postgres',
     dialectModule: pg,
 });
 
-const user = sequelize.define('User', {
+const users = sequelize.define('User', {
     id:
     {
         type: DataTypes.INTEGER,
@@ -23,17 +24,49 @@ const user = sequelize.define('User', {
         type: DataTypes.TEXT,
         allowNull: false,
     }
-})
+}, { timestamps: false })
+
+const sessions = sequelize.define('Session', {
+    id:
+    {
+        type: DataTypes.UUID,
+        primaryKey: true,
+        defaultValue: DataTypes.UUIDV4,
+    },
+    createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+    },
+    expiresAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+    }
+}, { timestamps: false })
+
+users.hasMany(sessions, {
+    foreignKey: 'userId',
+    onDelete: 'CASCADE',
+});
 
 const registerNewUser = async (username, password) => {
-    await user.create({
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await findUserByUsername(username);
+
+    if (user) {
+        return null;
+    }
+
+    await users.create({
         username: username,
-        password: password,
+        password: hashedPassword,
     });
+
+    return user;
 }
 
 const findUserByUsername = async (username) => {
-    return await user.findOne({
+    return await users.findOne({
         where: {
             username: username
         }
@@ -41,12 +74,59 @@ const findUserByUsername = async (username) => {
 }
 
 const checkCredentials = async (username, password) => {
-    return await user.findOne({
+    const user = await users.findOne({
         where: {
             username: username,
-            password: password
+        }
+    });
+
+    if (user == null) {
+        return null;
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+
+    if (match) {
+        return user;
+    }
+    return null;
+}
+
+const getUserFromSession = async (sessionId) => {
+    await sessions.destroy({
+        where: {
+            expiresAt: {[Op.lt]: new Date()}
         }
     })
+
+    const foundSession = await sessions.findOne({
+        where: {
+            id: sessionId
+        }
+    })
+
+    if (!foundSession) {
+        return null;
+    }
+
+    return await users.findOne({
+        where: {
+            id: foundSession.userId
+        }
+    })
+}
+
+const createNewSession = async (userId) => {
+    const createdAt = new Date();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+
+    const newSession = await sessions.create({
+        userId: userId,
+        createdAt: createdAt,
+        expiresAt: expiresAt,
+    })
+
+    return newSession.id;
 }
 
 async function initializeUserTable(){
@@ -59,5 +139,5 @@ async function initializeUserTable(){
 }
 
 module.exports = {
-    registerNewUser, findUserByUsername, initializeUserTable, checkCredentials
+    registerNewUser, findUserByUsername, initializeUserTable, checkCredentials, createNewSession, getUserFromSession
 }
