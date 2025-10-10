@@ -3,7 +3,7 @@ const {Op} = require("@sequelize/core")
 const {pg} = require("pg");
 const bcrypt = require("bcrypt");
 
-const sequelize = new Sequelize("postgres://neondb_owner:npg_hGEUP0L1Vbov@ep-orange-darkness-a2u2vo14-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require", {
+const sequelize = new Sequelize("postgres://neondb_owner:npg_vCs9qY1ugHTB@ep-empty-sun-a45epvri-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require", {
     dialect: 'postgres',
     dialectModule: pg,
 });
@@ -57,12 +57,10 @@ const registerNewUser = async (username, password) => {
         return null;
     }
 
-    await users.create({
+     return await users.create({
         username: username,
         password: hashedPassword,
     });
-
-    return user;
 }
 
 const findUserByUsername = async (username) => {
@@ -138,6 +136,13 @@ async function initializeUserTable(){
     }
 }
 
+async function destroySession(id) {
+    await sessions.destroy({
+        where: {id}
+    })
+}
+
 module.exports = {
-    registerNewUser, findUserByUsername, initializeUserTable, checkCredentials, createNewSession, getUserFromSession
+    registerNewUser, findUserByUsername, initializeUserTable, checkCredentials, createNewSession, getUserFromSession,
+    destroySession, users
 }

@@ -1,7 +1,8 @@
 const {Router} = require("express");
 const {z} = require("zod");
 const {returnGames, createNewGame, findGameById, deleteGameById,
-    updateGame, findGameByName, findGamesByName, getGamesOrderedByName} = require('../sequalize/games');
+    updateGame, findGameByName, findGamesByName, getGamesOrderedByName, findGameFromYear
+} = require('../sequalize/games');
 
 const gameSchema = z.object({
     name: z.string().min(3),
@@ -114,6 +115,23 @@ router.route('/filter/id')
         }
     })
 
+router.route('/filter/year')
+    .post(async (req, res) => {
+        try {
+            if (await validateClientInput(Validation.DEFAULT_FILTER_YEAR, req.body) === false) {
+                return res.status(404).json({ message: 'Validation failed for the given data!' });
+            }
+
+            const { year } = req.body;
+            const result = await findGameFromYear(year);
+
+            res.json(result);
+        } catch (error) {
+            res.status(500).json({ message: 'Error happened while filtering games' });
+        }
+    })
+
+
 const Validation = {
     DEFAULT_GET: "DEFAULT_GET",
     DEFAULT_POST: "DEFAULT_POST",
@@ -121,6 +139,7 @@ const Validation = {
     DEFAULT_DELETE: "DEFAULT_DELETE",
     DEFAULT_FILTER: "DEFAULT_FILTER",
     DEFAULT_FILTER_ID: "DEFAULT_FILTER_ID",
+    DEFAULT_FILTER_YEAR: "DEFAULT_FILTER_YEAR",
 }
 
 async function validateClientInput(method, body) {
@@ -130,23 +149,21 @@ async function validateClientInput(method, body) {
             return true;
         case Validation.DEFAULT_POST:
             components = [body, body?.name, body?.description, body?.image, body?.banner_url, body?.releaseDate, body?.price, body?.tag]
-
             return !checkUndefinedElementsInArray(components) && checkZodIntegrity(body) && !await checkGameExistanceByName(body?.name);
         case Validation.DEFAULT_PATCH:
             components = [body, body?.id, body?.name, body?.description, body?.image, body?.banner_url, body?.releaseDate, body?.price, body?.tag];
-
             return !checkUndefinedElementsInArray(components) && checkZodIntegrity(body) && await checkGameExistanceById(body?.id) && await checkUniqueName(body?.name, body?.id);
         case Validation.DEFAULT_DELETE:
             components = [body];
-
             return !checkUndefinedElementsInArray(components) && checkZodIntegrity(body) && await checkGameExistanceById(body?.id);
         case Validation.DEFAULT_FILTER:
             components = [body, body?.name];
-
             return !checkUndefinedElementsInArray(components);
         case Validation.DEFAULT_FILTER_ID:
             components = [body, body?.id];
-
+            return !checkUndefinedElementsInArray(components);
+        case Validation.DEFAULT_FILTER_YEAR:
+            components = [body, body?.year];
             return !checkUndefinedElementsInArray(components);
     }
 }

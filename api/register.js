@@ -1,5 +1,5 @@
-import {Router} from "express";
-import {createNewSession, registerNewUser} from "../sequalize/users";
+const {Router} = require("express");
+const {registerNewUser, createNewSession} = require("../sequalize/users");
 
 const router = Router();
 
@@ -16,7 +16,8 @@ router.route('/').post(async (req, res) => {
 
     res.cookie('session_id', sessionId, {
         httpOnly: true,
-        secure: true,
+        secure: false,
+        sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * 24,
     });
 
