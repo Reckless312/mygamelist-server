@@ -1,10 +1,12 @@
-import {Router} from "express";
-import {getUserFromSession} from "../sequalize/users";
+const {Router} = require("express");
+const {getUserFromSession} = require("../sequalize/users");
 
 const router = Router();
 
 router.route('/').get(async (req, res) => {
-    const sessionId = req.cookie.session_id;
+    console.log("Cookies received ", req.cookies);
+
+    const sessionId = req.cookies.session_id;
 
     if (sessionId === undefined) {
         return res.status(401).json({message: 'No session found'});
@@ -17,7 +19,6 @@ router.route('/').get(async (req, res) => {
     }
 
     return res.json({username: user.username});
-
 })
 
 module.exports = router;

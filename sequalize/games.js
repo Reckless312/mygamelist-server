@@ -2,7 +2,7 @@ const {Sequelize, DataTypes} = require("sequelize");
 const {Op} = require("@sequelize/core")
 const {pg} = require("pg");
 
-const sequelize = new Sequelize("postgres://neondb_owner:npg_hGEUP0L1Vbov@ep-orange-darkness-a2u2vo14-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require", {
+const sequelize = new Sequelize("postgres://neondb_owner:npg_vCs9qY1ugHTB@ep-empty-sun-a45epvri-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require", {
     dialect: 'postgres',
     dialectModule: pg,
 });
@@ -119,6 +119,20 @@ async function findGameById(id){
     })
 }
 
+async function findGameFromYear(year){
+    const start = new Date(`${year}-01-01`);
+    const end = new Date(`${year}-12-31`);
+
+    return await game.findAll({
+        where: {
+            releaseDate: {
+                [Op.between]: [start, end]
+            }
+        },
+        include: includeOptions()
+    })
+}
+
 async function deleteGameById(id){
     await game.destroy({
         where: {id}
@@ -216,6 +230,6 @@ async function destroyOldTags(tags, game_id) {
 }
 
 module.exports = {
-    connectToDatabase, initializeGameTables, returnGames, createNewGame, findGameById,
-    deleteGameById, updateGame, findGameByName, findGamesByName, getGamesOrderedByName
+    game, connectToDatabase, initializeGameTables, returnGames, createNewGame, findGameById,
+    deleteGameById, updateGame, findGameByName, findGamesByName, getGamesOrderedByName, findGameFromYear
 }
