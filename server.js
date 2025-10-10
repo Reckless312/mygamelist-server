@@ -37,6 +37,7 @@ app.use(async (req, res, next) => {
             await connectToDatabase();
             await initializeUserTable();
             await initializeListTable();
+            await initializeGameTables();
             initialized = true;
             console.log("Database initialized ✅");
         } catch (error) {
