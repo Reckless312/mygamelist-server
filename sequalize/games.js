@@ -2,6 +2,8 @@ const {Sequelize, DataTypes} = require("sequelize");
 const {Op} = require("@sequelize/core")
 const {pg} = require("pg");
 
+// hey
+
 const sequelize = new Sequelize("postgres://neondb_owner:npg_vCs9qY1ugHTB@ep-empty-sun-a45epvri-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require", {
     dialect: 'postgres',
     dialectModule: pg,
