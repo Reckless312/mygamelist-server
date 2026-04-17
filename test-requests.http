@@ -1,47 +1,264 @@
-###
-GET http://localhost:8080/api/games
+# =============================================================================
+# AUTH
+# =============================================================================
 
-###
-DELETE http://localhost:8080/api/games
+### Register
+POST http://localhost:8080/api/register
 Content-Type: application/json
 
 {
-  "id": 1
+  "username": "testuser",
+  "password": "testpass"
 }
 
-###
+### Register - missing fields (expect 400)
+POST http://localhost:8080/api/register
+Content-Type: application/json
+
+{
+  "username": ""
+}
+
+### Login
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "testpass"
+}
+
+### Login - wrong password (expect 401)
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "wrongpass"
+}
+
+### Login - missing fields (expect 400)
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{}
+
+### Get current user (requires session_id cookie)
+GET http://localhost:8080/api/hq
+
+### Logout (requires session_id cookie)
+POST http://localhost:8080/api/logout
+
+# =============================================================================
+# GAMES
+# =============================================================================
+
+### Get all games
+GET http://localhost:8080/api/games
+
+### Get games filtered by name
+GET http://localhost:8080/api/games?name=far cry
+
+### Get games filtered by year range
+GET http://localhost:8080/api/games?startYear=2010&endYear=2020
+
+### Get games sorted by name ascending
+GET http://localhost:8080/api/games?sort=name:asc
+
+### Get games sorted by price descending
+GET http://localhost:8080/api/games?sort=price:desc
+
+### Get games - combined filters
+GET http://localhost:8080/api/games?startYear=2010&endYear=2020&sort=releaseDate:asc
+
+### Get games - invalid sort field (expect 400)
+GET http://localhost:8080/api/games?sort=invalid:asc
+
+### Get games - invalid year format (expect 400)
+GET http://localhost:8080/api/games?startYear=20ab
+
+### Get single game by ID
+GET http://localhost:8080/api/games/1
+
+### Get single game - not found (expect 404)
+GET http://localhost:8080/api/games/999999
+
+### Get single game - invalid ID (expect 400)
+GET http://localhost:8080/api/games/abc
+
+### Create game
 POST http://localhost:8080/api/games
 Content-Type: application/json
 
 {
-  "name": "Far Cry® 4",
-  "description": " Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence. You are Ajay Ghale. Traveling to Kyrat to fulfill your mother’s dying wish, you find yourself caught up in a civil war to overthrow the oppressive regime of dictator Pagan Min. ",
-  "image": "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg?t=1739176495",
+  "name": "Far Cry 4",
+  "description": "Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence.",
+  "banner_url": "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg",
+  "images": [
+    "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg"
+  ],
   "releaseDate": "2014-11-18",
   "price": 30,
-  "tag": "Open World"
+  "tags": ["Open World", "FPS", "Action"]
 }
-###
-PATCH http://localhost:8080/api/games
+
+### Create game - name too short (expect 400)
+POST http://localhost:8080/api/games
 Content-Type: application/json
 
 {
-  "id": 4,
-  "name": "Far Cry® 5",
-  "description": " Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence. You are Ajay Ghale. Traveling to Kyrat to fulfill your mother’s dying wish, you find yourself caught up in a civil war to overthrow the oppressive regime of dictator Pagan Min. ",
-  "image": "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg?t=1739176495",
+  "name": "FC",
+  "description": "Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence.",
+  "banner_url": "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg",
+  "images": [],
   "releaseDate": "2014-11-18",
   "price": 30,
-  "tag": "Open World"
+  "tags": ["Open World"]
 }
 
-###
-POST http://localhost:8080/api/games/filter/id
+### Create game - duplicate name (expect 400)
+POST http://localhost:8080/api/games
 Content-Type: application/json
 
 {
-  "id": 4
+  "name": "Far Cry 4",
+  "description": "Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence.",
+  "banner_url": "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg",
+  "images": [],
+  "releaseDate": "2014-11-18",
+  "price": 30,
+  "tags": ["Open World"]
 }
 
-###
-GET http://localhost:8080/api/games/sort
+### Update game
+PATCH http://localhost:8080/api/games/1
+Content-Type: application/json
+
+{
+  "name": "Far Cry 4 Updated",
+  "description": "Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence.",
+  "banner_url": "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg",
+  "images": [
+    "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg"
+  ],
+  "releaseDate": "2014-11-18",
+  "price": 25,
+  "tags": ["Open World", "FPS"]
+}
+
+### Update game - not found (expect 404)
+PATCH http://localhost:8080/api/games/999999
+Content-Type: application/json
+
+{
+  "name": "Far Cry 4 Updated",
+  "description": "Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence.",
+  "banner_url": "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/298110/header.jpg",
+  "images": [],
+  "releaseDate": "2014-11-18",
+  "price": 25,
+  "tags": ["Open World"]
+}
+
+### Delete game
+DELETE http://localhost:8080/api/games/1
+
+### Delete game - not found (expect 404)
+DELETE http://localhost:8080/api/games/999999
+
+### Delete game - invalid ID (expect 400)
+DELETE http://localhost:8080/api/games/abc
+
+# =============================================================================
+# LIST (all require session_id cookie from login)
+# =============================================================================
+
+### Get user's list
+GET http://localhost:8080/api/list
+
+### Get user's list - unauthenticated (expect 401)
+GET http://localhost:8080/api/list
+Cookie:
+
+### Add game to list
+POST http://localhost:8080/api/list
+Content-Type: application/json
+
+{
+  "gameId": 1
+}
+
+### Add game to list - invalid gameId (expect 400)
+POST http://localhost:8080/api/list
+Content-Type: application/json
+
+{
+  "gameId": "abc"
+}
+
+### Add game to list - game not found (expect 404)
+POST http://localhost:8080/api/list
+Content-Type: application/json
+
+{
+  "gameId": 999999
+}
+
+### Get single list item
+GET http://localhost:8080/api/list/1
+
+### Get single list item - not in list
+GET http://localhost:8080/api/list/999999
+
+### Update list item - status only
+PATCH http://localhost:8080/api/list/1
+Content-Type: application/json
+
+{
+  "status": "Completed"
+}
+
+### Update list item - score only
+PATCH http://localhost:8080/api/list/1
+Content-Type: application/json
+
+{
+  "score": 8
+}
+
+### Update list item - status and score together
+PATCH http://localhost:8080/api/list/1
+Content-Type: application/json
+
+{
+  "status": "Completed",
+  "score": 9
+}
+
+### Update list item - invalid status (expect 400)
+PATCH http://localhost:8080/api/list/1
+Content-Type: application/json
+
+{
+  "status": "Invalid Status"
+}
+
+### Update list item - score out of range (expect 400)
+PATCH http://localhost:8080/api/list/1
+Content-Type: application/json
+
+{
+  "score": 11
+}
+
+### Update list item - no fields provided (expect 400)
+PATCH http://localhost:8080/api/list/1
+Content-Type: application/json
+
+{}
+
+### Remove game from list
+DELETE http://localhost:8080/api/list/1
+
+### Remove game from list - not in list (expect 404)
+DELETE http://localhost:8080/api/list/999999
