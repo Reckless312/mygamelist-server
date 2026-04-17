@@ -3,7 +3,7 @@ const {Op} = require("@sequelize/core")
 const {pg} = require("pg");
 const bcrypt = require("bcrypt");
 
-const sequelize = new Sequelize("postgres://neondb_owner:npg_vCs9qY1ugHTB@ep-empty-sun-a45epvri-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require", {
+const sequelize = new Sequelize("postgres://postgres:Cora@localhost:5432/postgres", {
     dialect: 'postgres',
     dialectModule: pg,
 });

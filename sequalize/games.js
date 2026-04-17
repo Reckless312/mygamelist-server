@@ -2,9 +2,7 @@ const {Sequelize, DataTypes} = require("sequelize");
 const {Op} = require("@sequelize/core")
 const {pg} = require("pg");
 
-// hey
-
-const sequelize = new Sequelize("postgres://neondb_owner:npg_vCs9qY1ugHTB@ep-empty-sun-a45epvri-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require", {
+const sequelize = new Sequelize("postgres://postgres:Cora@localhost:5432/postgres", {
     dialect: 'postgres',
     dialectModule: pg,
 });
@@ -71,6 +69,11 @@ game_tags.belongsTo(game, {
     foreignKey: 'gameId',
 });
 
+const nameField = game.rawAttributes.name;
+const releaseDateField = game.rawAttributes.releaseDate;
+const priceField = game.rawAttributes.price;
+
+const acceptedSortingFields = [nameField, releaseDateField, priceField];
 
 async function connectToDatabase() {
     try{
@@ -107,9 +110,32 @@ async function createNewGame(name, description, banner, image, tags, price, rele
     await createNewTags(tags, addedGame.id);
 }
 
-async function returnGames(){
-    return await game.findAll({
-        include: includeOptions()});
+async function returnGames(startYear = null, endYear = null, sortedColumn = null, sortingOption = null){
+    const queryOptions = {
+        include: includeOptions(),
+        where: {},
+        order: []
+    }
+
+    const dateOptions = {};
+
+    if (startYear) {
+        dateOptions[Op.gte] = new Date(`${startYear}-01-01`);
+    }
+
+    if (endYear) {
+        dateOptions[Op.lte] = new Date(`${endYear}-12-31`);
+    }
+
+    if (startYear || endYear) {
+        queryOptions.where.releaseDate = dateOptions;
+    }
+
+    if (sortedColumn && sortingOption) {
+        queryOptions.order.push([sortedColumn, sortingOption.toUpperCase()]);
+    }
+
+    return await game.findAll(queryOptions);
 }
 
 async function findGameById(id){
@@ -233,5 +259,6 @@ async function destroyOldTags(tags, game_id) {
 
 module.exports = {
     game, connectToDatabase, initializeGameTables, returnGames, createNewGame, findGameById,
-    deleteGameById, updateGame, findGameByName, findGamesByName, getGamesOrderedByName, findGameFromYear
+    deleteGameById, updateGame, findGameByName, findGamesByName, getGamesOrderedByName, findGameFromYear,
+    acceptedSortingFields,
 }

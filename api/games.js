@@ -1,8 +1,9 @@
 const {Router} = require("express");
 const {z} = require("zod");
 const {returnGames, createNewGame, findGameById, deleteGameById,
-    updateGame, findGameByName, findGamesByName, getGamesOrderedByName, findGameFromYear
+    updateGame, findGameByName, findGamesByName, getGamesOrderedByName, findGameFromYear, acceptedSortingFields
 } = require('../sequalize/games');
+const {isValidYear} = require("../utils/gamesApiValidation");
 
 const gameSchema = z.object({
     name: z.string().min(3),
@@ -19,7 +20,27 @@ const router = Router();
 router.route('/')
     .get(async (req, res) => {
         try {
-            const games = await returnGames();
+            const {startYear, endYear, sort} = req.query;
+
+            if (startYear && !isValidYear(startYear)) {
+                return res.status(400).json({message: 'Invalid start year format'});
+            }
+
+            if (endYear && !isValidYear(endYear)) {
+                return res.status(400).json({message: 'Invalid end year format'});
+            }
+
+            const [field, order] = sort ? sort.split(':') : [];
+
+            if (field && !acceptedSortingFields.includes(field)) {
+                return res.status(400).json({message: 'Invalid sort field'});
+            }
+
+            if (order && !['asc', 'desc'].includes(order.toLowerCase())) {
+                return res.status(400).json({message: 'Invalid sort order'});
+            }
+
+            const games = await returnGames(startYear, endYear, field, order);
             res.json(games);
         } catch (error) {
             console.log(error);
@@ -130,70 +151,5 @@ router.route('/filter/year')
             res.status(500).json({ message: 'Error happened while filtering games' });
         }
     })
-
-
-const Validation = {
-    DEFAULT_GET: "DEFAULT_GET",
-    DEFAULT_POST: "DEFAULT_POST",
-    DEFAULT_PATCH: "DEFAULT_PATCH",
-    DEFAULT_DELETE: "DEFAULT_DELETE",
-    DEFAULT_FILTER: "DEFAULT_FILTER",
-    DEFAULT_FILTER_ID: "DEFAULT_FILTER_ID",
-    DEFAULT_FILTER_YEAR: "DEFAULT_FILTER_YEAR",
-}
-
-async function validateClientInput(method, body) {
-    let components;
-    switch (method) {
-        case Validation.DEFAULT_GET:
-            return true;
-        case Validation.DEFAULT_POST:
-            components = [body, body?.name, body?.description, body?.image, body?.banner_url, body?.releaseDate, body?.price, body?.tag]
-            return !checkUndefinedElementsInArray(components) && checkZodIntegrity(body) && !await checkGameExistanceByName(body?.name);
-        case Validation.DEFAULT_PATCH:
-            components = [body, body?.id, body?.name, body?.description, body?.image, body?.banner_url, body?.releaseDate, body?.price, body?.tag];
-            return !checkUndefinedElementsInArray(components) && checkZodIntegrity(body) && await checkGameExistanceById(body?.id) && await checkUniqueName(body?.name, body?.id);
-        case Validation.DEFAULT_DELETE:
-            components = [body];
-            return !checkUndefinedElementsInArray(components) && checkZodIntegrity(body) && await checkGameExistanceById(body?.id);
-        case Validation.DEFAULT_FILTER:
-            components = [body, body?.name];
-            return !checkUndefinedElementsInArray(components);
-        case Validation.DEFAULT_FILTER_ID:
-            components = [body, body?.id];
-            return !checkUndefinedElementsInArray(components);
-        case Validation.DEFAULT_FILTER_YEAR:
-            components = [body, body?.year];
-            return !checkUndefinedElementsInArray(components);
-    }
-}
-
-function checkUndefinedElementsInArray(array) {
-    for (const element of array) {
-        if (element === undefined) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function checkZodIntegrity(data) {
-    const validation = gameSchema.safeParse(data);
-    return validation.success;
-}
-
-async function checkGameExistanceByName(name) {
-    return await findGameByName(name) !== undefined;
-}
-
-async function checkGameExistanceById(id) {
-    return await findGameById(id) !== undefined;
-}
-
-async function checkUniqueName(name, id) {
-    const game = await findGameByName(name);
-
-    return game === undefined || game.id === id;
-}
 
 module.exports = router;
