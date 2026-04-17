@@ -1,7 +1,7 @@
 const {Sequelize, DataTypes} = require("sequelize");
 const {pg} = require("pg");
 const {users, findUserByUsername} = require("./users");
-const {game, findGameById} = require("./games");
+const {game, findGameById, gameIncludeOptions} = require("./games");
 const sequelize = new Sequelize("postgres://postgres:Cora@localhost:5432/postgres", {
     dialect: 'postgres',
     dialectModule: pg,
@@ -37,9 +37,9 @@ list.belongsTo(game, {
 
 const addGameToList = async (username, gameId) => {
     const user = await findUserByUsername(username);
-    const game = await findGameById(gameId);
+    const foundGame = await findGameById(gameId);
 
-    if (!user || !game) {
+    if (!user || !foundGame) {
         return null;
     }
 
@@ -61,52 +61,37 @@ const getUserList = async (username) => {
     return await list.findAll({
         where: {
             userId: user.id
-        }
+        },
+        include: [{ model: game, include: gameIncludeOptions }]
     })
 }
 
-const changeGameStatus = async (username, gameId, status) => {
+const updateListItem = async (username, gameId, fields) => {
     const user = await findUserByUsername(username);
-    const game = await findGameById(gameId);
 
-    if (!user || !game) {
+    if (!user) {
         return null;
     }
 
-    await list.update({
-        status: status,
-    }, {
+    const [updated] = await list.update(fields, {
         where: {
             userId: user.id,
             gameId: gameId
         }
     })
-}
 
-const changeGameScore = async (username, gameId, score) => {
-    const user = await findUserByUsername(username);
-    const game = await findGameById(gameId);
-
-    if (!user || !game) {
+    if (updated === 0) {
         return null;
     }
 
-    await list.update({
-        score: score,
-    }, {
-        where: {
-            userId: user.id,
-            gameId: gameId
-            }
-        }
-    )
+    return updated;
 }
 
 const deleteGameFromList = async (username, gameId) => {
     const user = await findUserByUsername(username);
-    const game = await findGameById(gameId);
+    const foundGame = await findGameById(gameId);
 
-    if (!user || !game) {
+    if (!user || !foundGame) {
         return null;
     }
 
@@ -118,29 +103,10 @@ const deleteGameFromList = async (username, gameId) => {
     })
 }
 
-const checkIfGameIsInList = async (username, gameId) => {
-    const user = await findUserByUsername(username);
-    const game = await findGameById(gameId);
-
-    if (!user || !game) {
-        return null;
-    }
-
-    const foundItem = await list.findOne({
-        where: {
-            userId: user.id,
-            gameId: gameId
-        }
-    })
-
-    return foundItem != null;
-}
-
 const getListItem = async (username, gameId) => {
     const user = await findUserByUsername(username);
-    const game = await findGameById(gameId);
 
-    if (!user || !game) {
+    if (!user) {
         return null;
     }
 
@@ -148,7 +114,8 @@ const getListItem = async (username, gameId) => {
         where: {
             userId: user.id,
             gameId: gameId
-        }
+        },
+        include: [{ model: game, include: gameIncludeOptions }]
     })
 }
 
@@ -162,5 +129,5 @@ async function initializeListTable(){
 }
 
 module.exports = {
-    initializeListTable, addGameToList, getUserList, changeGameStatus, changeGameScore, deleteGameFromList, checkIfGameIsInList, getListItem
+    initializeListTable, addGameToList, getUserList, updateListItem, deleteGameFromList, getListItem
 }

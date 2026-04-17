@@ -69,11 +69,7 @@ game_tags.belongsTo(game, {
     foreignKey: 'gameId',
 });
 
-const nameField = game.rawAttributes.name;
-const releaseDateField = game.rawAttributes.releaseDate;
-const priceField = game.rawAttributes.price;
-
-const acceptedSortingFields = [nameField, releaseDateField, priceField];
+const acceptedSortingFields = ['name', 'releaseDate', 'price'];
 
 async function connectToDatabase() {
     try{
@@ -186,8 +182,8 @@ async function updateGame(id, name, banner, description, image, tag, price, rele
         where: {gameId: id}
     })
 
-    await destroyOldImages(gameImages, id);
-    await destroyOldTags(gameTags, id);
+    await destroyOldImages(gameImages);
+    await destroyOldTags(gameTags);
 
     await createNewImage(image, id);
     await createNewTags(tag, id);
@@ -219,8 +215,10 @@ async function getGamesOrderedByName(){
     })
 }
 
+const gameIncludeOptions = [{model: game_images, attributes: ['image_url']}, {model: game_tags, attributes: ['tag']}];
+
 function includeOptions() {
-    return [{model: game_images, attributes: ['image_url']}, {model: game_tags, attributes: ['tag']}]
+    return gameIncludeOptions;
 }
 
 async function createNewImage(images, game_id) {
@@ -241,7 +239,7 @@ async function createNewTags(tags, game_id) {
     }
 }
 
-async function destroyOldImages(images, game_id) {
+async function destroyOldImages(images) {
     for (const image of images) {
         await game_images.destroy({
             where: {id: image.id}
@@ -249,7 +247,7 @@ async function destroyOldImages(images, game_id) {
     }
 }
 
-async function destroyOldTags(tags, game_id) {
+async function destroyOldTags(tags) {
     for (const tag of tags) {
         await game_tags.destroy({
             where: {id: tag.id}
@@ -259,6 +257,5 @@ async function destroyOldTags(tags, game_id) {
 
 module.exports = {
     game, connectToDatabase, initializeGameTables, returnGames, createNewGame, findGameById,
-    deleteGameById, updateGame, findGameByName, findGamesByName, getGamesOrderedByName, findGameFromYear,
-    acceptedSortingFields,
+    deleteGameById, updateGame, findGameByName, findGamesByName, acceptedSortingFields, gameIncludeOptions,
 }

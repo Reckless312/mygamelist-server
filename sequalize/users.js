@@ -48,6 +48,10 @@ users.hasMany(sessions, {
     onDelete: 'CASCADE',
 });
 
+sessions.belongsTo(users, {
+    foreignKey: 'userId',
+});
+
 const registerNewUser = async (username, password) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -72,22 +76,19 @@ const findUserByUsername = async (username) => {
 }
 
 const checkCredentials = async (username, password) => {
-    const user = await users.findOne({
-        where: {
-            username: username,
-        }
-    });
+    const user = await findUserByUsername(username);
 
-    if (user == null) {
+    if (!user) {
         return null;
     }
 
     const match = await bcrypt.compare(password, user.password);
 
-    if (match) {
-        return user;
+    if (!match) {
+        return null;
     }
-    return null;
+
+    return user;
 }
 
 const getUserFromSession = async (sessionId) => {
@@ -100,18 +101,15 @@ const getUserFromSession = async (sessionId) => {
     const foundSession = await sessions.findOne({
         where: {
             id: sessionId
-        }
+        },
+        include: [{ model: users }]
     })
 
     if (!foundSession) {
         return null;
     }
 
-    return await users.findOne({
-        where: {
-            id: foundSession.userId
-        }
-    })
+    return foundSession.User;
 }
 
 const createNewSession = async (userId) => {
