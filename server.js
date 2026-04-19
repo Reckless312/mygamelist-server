@@ -5,6 +5,7 @@ const hqRoute = require("./api/hq");
 const registerRoute = require("./api/register");
 const logoutRoute = require("./api/logout");
 const listRoute = require("./api/list");
+const usersRoute = require("./api/users");
 const cors = require("cors");
 const {connectToDatabase, initializeGameTables} = require("./sequalize/games")
 const {initializeUserTable} = require("./sequalize/users")
@@ -27,6 +28,7 @@ app.use('/api/hq', hqRoute);
 app.use('/api/register', registerRoute);
 app.use('/api/logout', logoutRoute);
 app.use('/api/list', listRoute);
+app.use('/api/users', usersRoute);
 
 module.exports = app;
 

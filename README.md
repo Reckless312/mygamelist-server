@@ -20,6 +20,11 @@ REST API backend for MyGameList, built with Node.js + Express, deployed on Verce
 | PATCH | `/api/games/:id` | Update a game |
 | DELETE | `/api/games/:id` | Delete a game |
 
+### Users
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users/:username/list` | Get any user's list (public) |
+
 ### List *(requires auth)*
 | Method | Endpoint | Description |
 |--------|----------|-------------|
