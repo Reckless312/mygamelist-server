@@ -91,19 +91,19 @@ async function initializeGameTables(){
 
 async function createNewGame(name, description, banner, image, tags, price, releaseDate){
 
-    await game.create({
+    const addedGame = await game.create({
         name: name,
         description: description,
         banner_url: banner,
         releaseDate: releaseDate,
         price: price,
-    })
-
-    const addedGame = (await findGamesByName(name))[0];
+    });
 
     await createNewImage(image, addedGame.id);
 
     await createNewTags(tags, addedGame.id);
+
+    return findGameById(addedGame.id);
 }
 
 async function returnGames(startYear = null, endYear = null, sortedColumn = null, sortingOption = null){
@@ -215,7 +215,7 @@ async function getGamesOrderedByName(){
     })
 }
 
-const gameIncludeOptions = [{model: game_images, attributes: ['image_url']}, {model: game_tags, attributes: ['tag']}];
+const gameIncludeOptions = [{model: game_images, attributes: ['id', 'image_url']}, {model: game_tags, attributes: ['id', 'tag']}];
 
 function includeOptions() {
     return gameIncludeOptions;

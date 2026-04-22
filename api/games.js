@@ -1,4 +1,4 @@
-const {returnGames, createNewGame, findGamesByName, deleteGameById, updateGame} = require('../sequalize/games');
+const {returnGames, createNewGame, findGamesByName, deleteGameById, updateGame, findGameById} = require('../sequalize/games');
 const gameService = require('../service/gameService');
 
 const {Router} = require('express');
@@ -39,9 +39,9 @@ router.route('/')
 
             const {name, description, banner_url, images, releaseDate, price, tags} = req.body;
 
-            await createNewGame(name, description, banner_url, images, tags, price, releaseDate);
+            const createdGame = await createNewGame(name, description, banner_url, images, tags, price, releaseDate);
 
-            res.status(200).json({message: 'Game created successfully'});
+            res.status(201).json(createdGame);
         } catch (error) {
             res.status(500).json({message: error.message});
         }
@@ -73,7 +73,9 @@ router.route('/:id')
 
             await updateGame(req.id, name, banner_url, description, images, tags, price, releaseDate);
 
-            res.json({message: 'Game updated successfully'});
+            const updatedGame = await findGameById(req.id);
+
+            res.json(updatedGame);
         } catch (error) {
             res.status(500).json({message: error.message});
         }
