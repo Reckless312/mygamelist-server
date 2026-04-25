@@ -34,28 +34,28 @@ app.use('/api/users', usersRoute);
 
 module.exports = app;
 
-// let initialized = false;
-// app.use(async (req, res, next) => {
-//     if (!initialized) {
-//         try {
-//             await connectToDatabase();
-//             await initializeUserTable();
-//             await initializeListTable();
-//             await initializeGameTables();
-//             initialized = true;
-//             console.log("Database initialized ✅");
-//         } catch (error) {
-//             console.error("Database init failed ❌", error);
-//         }
-//     }
-//     next();
-// });
-
-app.listen(port, async () => {
-    await connectToDatabase();
-    await initializeGameTables();
-    await initializeUserTable();
-    await initializeListTable();
-
-    console.log(`Server running on port ${port}`);
+let initialized = false;
+app.use(async (req, res, next) => {
+    if (!initialized) {
+        try {
+            await connectToDatabase();
+            await initializeUserTable();
+            await initializeListTable();
+            await initializeGameTables();
+            initialized = true;
+            console.log("Database initialized ✅");
+        } catch (error) {
+            console.error("Database init failed ❌", error);
+        }
+    }
+    next();
 });
+
+// app.listen(port, async () => {
+//     await connectToDatabase();
+//     await initializeGameTables();
+//     await initializeUserTable();
+//     await initializeListTable();
+//
+//     console.log(`Server running on port ${port}`);
+// });
