@@ -29,14 +29,19 @@ function validateScore(score) {
 }
 
 async function verifySession(req, res, next) {
-    const user = await resolveSession(req);
+    try {
+        const user = await resolveSession(req);
 
-    if (!user) {
-        return res.status(401).json({ message: 'Not authenticated' });
+        if (!user) {
+            return res.status(401).json({ message: 'Not authenticated' });
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
     }
-
-    req.user = user;
-    next();
 }
 
 async function verifyGameId(req, res, next) {

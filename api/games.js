@@ -20,6 +20,7 @@ router.route('/')
 
             res.json(games);
         } catch (error) {
+            console.error(error);
             res.status(500).json({message: error.message});
         }
     })
@@ -43,6 +44,7 @@ router.route('/')
 
             res.status(201).json(createdGame);
         } catch (error) {
+            console.error(error);
             res.status(500).json({message: error.message});
         }
     })
@@ -52,6 +54,7 @@ router.route('/:id')
         try {
             res.json(req.game);
         } catch (error) {
+            console.error(error);
             res.status(500).json({message: error.message});
         }
     })
@@ -77,6 +80,7 @@ router.route('/:id')
 
             res.json(updatedGame);
         } catch (error) {
+            console.error(error);
             res.status(500).json({message: error.message});
         }
     })
@@ -86,6 +90,7 @@ router.route('/:id')
 
             res.json({message: 'Game deleted successfully'});
         } catch (error) {
+            console.error(error);
             res.status(500).json({message: error.message});
         }
     })

@@ -16,6 +16,7 @@ router.route('/')
 
             res.json(list.map(item => ({ game: item.Game, status: item.status, score: item.score })));
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: error.message });
         }
     })
@@ -35,6 +36,7 @@ router.route('/')
 
             res.status(200).json({ message: 'Game added successfully' });
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: error.message });
         }
     })
@@ -50,6 +52,7 @@ router.route('/:gameId')
 
             res.json({ isInList: true, game: item.Game, status: item.status, score: item.score });
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: error.message });
         }
     })
@@ -87,6 +90,7 @@ router.route('/:gameId')
 
             res.status(200).json({ message: 'List item updated successfully' });
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: error.message });
         }
     })
@@ -100,6 +104,7 @@ router.route('/:gameId')
 
             res.status(200).json({ message: 'Game removed from list' });
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: error.message });
         }
     })

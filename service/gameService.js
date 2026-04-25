@@ -75,22 +75,27 @@ async function validateTakenName(name, excludeId = null) {
 }
 
 async function verifyIdAndExistence(req, res, next) {
-    const validId = validateId(req.params.id);
+    try {
+        const validId = validateId(req.params.id);
 
-    if (!validId.ok) {
-        return res.status(400).json({message: validId.message});
+        if (!validId.ok) {
+            return res.status(400).json({ message: validId.message });
+        }
+
+        const validExistence = await validateGameExistence(validId.id);
+
+        if (!validExistence.ok) {
+            return res.status(404).json({ message: validExistence.message });
+        }
+
+        req.game = validExistence.game;
+        req.id = validId.id;
+
+        next();
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
     }
-
-    const validExistence = await validateGameExistence(validId.id);
-
-    if (!validExistence.ok) {
-        return res.status(404).json({message: validExistence.message});
-    }
-
-    req.game = validExistence.game;
-    req.id = validId.id;
-
-    next();
 }
 
 module.exports = {validateGameBody, validateFilterOptions, validateTakenName, verifyIdAndExistence};

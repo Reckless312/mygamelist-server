@@ -22,7 +22,12 @@ const users = sequelize.define('User', {
     },
     password: {
         type: DataTypes.TEXT,
-        allowNull: false,
+        allowNull: true,
+    },
+    steamId: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        unique: true,
     }
 }, { timestamps: false })
 
@@ -65,6 +70,29 @@ const registerNewUser = async (username, password) => {
         username: username,
         password: hashedPassword,
     });
+}
+
+const findUserBySteamId = async (steamId) => {
+    return await users.findOne({ where: { steamId } });
+}
+
+const findOrCreateSteamUser = async (steamId, displayName) => {
+    const existing = await findUserBySteamId(steamId);
+
+    if (existing) {
+        return { user: existing, conflict: false };
+    }
+
+    const username = displayName;
+    const taken = await findUserByUsername(username);
+
+    if (taken) {
+        return { user: null, conflict: true };
+    }
+
+    const user = await users.create({ username, steamId, password: null });
+
+    return { user, conflict: false };
 }
 
 const findUserByUsername = async (username) => {
@@ -141,6 +169,6 @@ async function destroySession(id) {
 }
 
 module.exports = {
-    registerNewUser, findUserByUsername, initializeUserTable, checkCredentials, createNewSession, getUserFromSession,
+    registerNewUser, findUserByUsername, findOrCreateSteamUser, initializeUserTable, checkCredentials, createNewSession, getUserFromSession,
     destroySession, users
 }

@@ -1,6 +1,7 @@
 const express = require('express');
 const gamesRoute = require("./api/games");
-const loginRoute = require("./api/login");
+const loginRoute = require('./api/login');
+const loginSteamRoute = require('./api/loginSteam');
 const hqRoute = require("./api/hq");
 const registerRoute = require("./api/register");
 const logoutRoute = require("./api/logout");
@@ -24,6 +25,7 @@ app.use(cookieParser());
 
 app.use('/api/games', gamesRoute);
 app.use('/api/login', loginRoute);
+app.use('/api/login/steam', loginSteamRoute);
 app.use('/api/hq', hqRoute);
 app.use('/api/register', registerRoute);
 app.use('/api/logout', logoutRoute);

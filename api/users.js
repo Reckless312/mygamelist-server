@@ -13,6 +13,7 @@ router.route('/:username/list').get(async (req, res) => {
 
         res.json(list.map(item => ({ game: item.Game, status: item.status, score: item.score })));
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: error.message });
     }
 });
