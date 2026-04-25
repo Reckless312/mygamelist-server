@@ -44,6 +44,26 @@ async function verifySession(req, res, next) {
     }
 }
 
+async function verifyAdmin(req, res, next) {
+    try {
+        const user = await resolveSession(req);
+
+        if (!user) {
+            return res.status(401).json({ message: 'Not authenticated' });
+        }
+
+        if (user.role !== 'admin') {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 async function verifyGameId(req, res, next) {
     const validId = validateGameId(req.params.gameId);
 
@@ -55,4 +75,4 @@ async function verifyGameId(req, res, next) {
     next();
 }
 
-module.exports = { validateGameId, validateStatus, validateScore, verifySession, verifyGameId };
+module.exports = { validateGameId, validateStatus, validateScore, verifySession, verifyAdmin, verifyGameId };

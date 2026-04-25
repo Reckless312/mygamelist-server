@@ -28,6 +28,15 @@ const users = sequelize.define('User', {
         type: DataTypes.TEXT,
         allowNull: true,
         unique: true,
+    },
+    avatarUrl: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
+    role: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        defaultValue: 'user',
     }
 }, { timestamps: false })
 
@@ -76,7 +85,7 @@ const findUserBySteamId = async (steamId) => {
     return await users.findOne({ where: { steamId } });
 }
 
-const findOrCreateSteamUser = async (steamId, displayName) => {
+const findOrCreateSteamUser = async (steamId, displayName, avatarUrl) => {
     const existing = await findUserBySteamId(steamId);
 
     if (existing) {
@@ -90,7 +99,7 @@ const findOrCreateSteamUser = async (steamId, displayName) => {
         return { user: null, conflict: true };
     }
 
-    const user = await users.create({ username, steamId, password: null });
+    const user = await users.create({ username, steamId, avatarUrl, password: null });
 
     return { user, conflict: false };
 }
@@ -155,7 +164,7 @@ const createNewSession = async (userId) => {
 
 async function initializeUserTable(){
     try{
-        await sequelize.sync();
+        await sequelize.sync({ alter: true });
     }
     catch(error){
         console.error(error);

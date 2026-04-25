@@ -3,6 +3,7 @@ const gameService = require('../service/gameService');
 
 const {Router} = require('express');
 const {verifyIdAndExistence} = require("../service/gameService");
+const {verifyAdmin} = require('../service/listService');
 const router = Router();
 
 router.route('/')
@@ -24,7 +25,7 @@ router.route('/')
             res.status(500).json({message: error.message});
         }
     })
-    .post(async (req, res) => {
+    .post(verifyAdmin, async (req, res) => {
         try {
             const zodValidation = gameService.validateGameBody(req.body);
 
@@ -38,9 +39,9 @@ router.route('/')
                 return res.status(400).json({message: 'A game with that name already exists'});
             }
 
-            const {name, description, banner_url, images, releaseDate, price, tags} = req.body;
+            const {name, description, banner_url, images, releaseDate, price, tags, developer} = req.body;
 
-            const createdGame = await createNewGame(name, description, banner_url, images, tags, price, releaseDate);
+            const createdGame = await createNewGame(name, description, banner_url, images, tags, price, releaseDate, developer);
 
             res.status(201).json(createdGame);
         } catch (error) {
@@ -58,7 +59,7 @@ router.route('/:id')
             res.status(500).json({message: error.message});
         }
     })
-    .patch(verifyIdAndExistence, async (req, res) => {
+    .patch(verifyAdmin, verifyIdAndExistence, async (req, res) => {
         try {
             const zodValidation = gameService.validateGameBody(req.body);
 
@@ -72,9 +73,9 @@ router.route('/:id')
                 return res.status(400).json({message: 'A game with that name already exists'});
             }
 
-            const {name, description, banner_url, images, releaseDate, price, tags} = req.body;
+            const {name, description, banner_url, images, releaseDate, price, tags, developer} = req.body;
 
-            await updateGame(req.id, name, banner_url, description, images, tags, price, releaseDate);
+            await updateGame(req.id, name, banner_url, description, images, tags, price, releaseDate, developer);
 
             const updatedGame = await findGameById(req.id);
 
@@ -84,7 +85,7 @@ router.route('/:id')
             res.status(500).json({message: error.message});
         }
     })
-    .delete(verifyIdAndExistence , async (req, res) => {
+    .delete(verifyAdmin, verifyIdAndExistence, async (req, res) => {
         try {
             await deleteGameById(req.id);
 

@@ -10,6 +10,7 @@ const gameSchema = z.object({
     releaseDate: z.string().date(),
     price: z.number().nonnegative().max(100),
     tags: z.array(z.string().min(3)),
+    developer: z.string().min(2).optional(),
 });
 
 function validateGameBody(body) {

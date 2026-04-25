@@ -17,7 +17,7 @@ router.route('/').get(async (req, res) => {
             return res.status(401).json({ message: 'Something went wrong' });
         }
 
-        return res.json({ username: user.username });
+        return res.json({ username: user.username, avatarUrl: user.avatarUrl ?? null, role: user.role });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
