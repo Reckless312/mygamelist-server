@@ -7,11 +7,13 @@ const registerRoute = require("./api/register");
 const logoutRoute = require("./api/logout");
 const listRoute = require("./api/list");
 const usersRoute = require("./api/users");
+const favoritesRoute = require("./api/favorites");
 const cors = require("cors");
 const {connectToDatabase, initializeGameTables} = require("./sequalize/games")
 const {initializeUserTable} = require("./sequalize/users")
 const cookieParser = require('cookie-parser');
 const {initializeListTable} = require("./sequalize/list");
+const {initializeFavoritesTable} = require("./sequalize/favorites");
 
 const app = express();
 const port = 8080;
@@ -30,6 +32,7 @@ app.use('/api/hq', hqRoute);
 app.use('/api/register', registerRoute);
 app.use('/api/logout', logoutRoute);
 app.use('/api/list', listRoute);
+app.use('/api/favorites', favoritesRoute);
 app.use('/api/users', usersRoute);
 
 module.exports = app;
@@ -56,6 +59,7 @@ app.listen(port, async () => {
     await initializeGameTables();
     await initializeUserTable();
     await initializeListTable();
+    await initializeFavoritesTable();
 
     console.log(`Server running on port ${port}`);
 });
