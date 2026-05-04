@@ -19,7 +19,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "express-fileupload": "^1.5.1",
-    "pg": "^8.16.0",
+    "mysql2": "^3.11.0",
     "sequelize": "^6.37.7",
     "serverless-http": "^3.2.0",
     "ts-jest": "^29.3.2",

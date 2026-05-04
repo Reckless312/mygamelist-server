@@ -1,11 +1,9 @@
 const {Sequelize, DataTypes} = require("sequelize");
 const {Op} = require("@sequelize/core")
-const {pg} = require("pg");
 const bcrypt = require("bcrypt");
 
-const sequelize = new Sequelize(process.env.NEON_DATABASE_URL || process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    dialectModule: pg,
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'mysql',
 });
 
 const users = sequelize.define('User', {
@@ -16,7 +14,7 @@ const users = sequelize.define('User', {
         autoIncrement: true,
     },
     username: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING(255),
         allowNull: false,
         unique: true,
     },
@@ -25,7 +23,7 @@ const users = sequelize.define('User', {
         allowNull: true,
     },
     steamId: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING(255),
         allowNull: true,
         unique: true,
     },
