@@ -18,12 +18,26 @@ const {initializeFavoritesTable} = require("./sequalize/favorites");
 const app = express();
 const port = 8080;
 
+const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',')
+    : ["http://localhost:3000", "https://mygamelist-liard.vercel.app"];
+
 app.use(cors({
-    origin: ["http://localhost:3000", "https://mygamelist-liard.vercel.app"],
+    origin: allowedOrigins,
     credentials: true,
 }))
 app.use(express.json());
 app.use(cookieParser());
+
+app.get('/api/ip', (req, res) => {
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    const ips = Object.values(interfaces)
+        .flat()
+        .filter(i => i.family === 'IPv4' && !i.internal)
+        .map(i => i.address);
+    res.json({ hostname: os.hostname(), ip: ips[0] || 'unknown' });
+});
 
 app.use('/api/games', gamesRoute);
 app.use('/api/login', loginRoute);

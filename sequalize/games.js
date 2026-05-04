@@ -1,10 +1,8 @@
 const {Sequelize, DataTypes} = require("sequelize");
 const {Op} = require("@sequelize/core")
-const {pg} = require("pg");
 
-const sequelize = new Sequelize(process.env.NEON_DATABASE_URL || process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    dialectModule: pg,
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'mysql',
 });
 
 const game = sequelize.define('Game', {
@@ -15,10 +13,9 @@ const game = sequelize.define('Game', {
         autoIncrement: true,
     },
     name: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING(255),
         allowNull: false,
         unique: true,
-        index: true,
     },
     description: {
         type: DataTypes.TEXT,
@@ -51,7 +48,7 @@ const game_images = sequelize.define('Game_Images', {
 
 const tag = sequelize.define('Tag', {
     name: {
-        type: DataTypes.TEXT,
+        type: DataTypes.STRING(255),
         allowNull: false,
         unique: true,
     }
@@ -189,7 +186,7 @@ async function findGamesByName(name){
     return await game.findAll({
         where: {
             name: {
-                [Op.iLike]: `%${name}%`
+                [Op.like]: `%${name}%`
             }
         },
         include: includeOptions()

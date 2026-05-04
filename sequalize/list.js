@@ -1,10 +1,8 @@
 const {Sequelize, DataTypes} = require("sequelize");
-const {pg} = require("pg");
 const {users, findUserByUsername} = require("./users");
 const {game, findGameById, gameIncludeOptions} = require("./games");
-const sequelize = new Sequelize(process.env.NEON_DATABASE_URL || process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    dialectModule: pg,
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: 'mysql',
 });
 
 const list = sequelize.define('List', {
