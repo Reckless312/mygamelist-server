@@ -24,8 +24,8 @@ router.route('/').post(async (req, res) => {
 
         res.cookie('session_id', sessionId, {
             httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
+            secure: true,
+            sameSite: 'none',
             maxAge: 1000 * 60 * 60 * 24,
         });
 
